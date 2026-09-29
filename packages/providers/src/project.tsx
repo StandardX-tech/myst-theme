@@ -16,7 +16,7 @@ export function ProjectProvider({
   return <ProjectContext.Provider value={project}>{children}</ProjectContext.Provider>;
 }
 
-export function useProjectManifest() {
+export function useProjectManifest(): ManifestProject | undefined {
   const config = useSiteManifest();
   const project = useContext(ProjectContext);
   return project ?? config?.projects?.[0];
