@@ -13,12 +13,22 @@ function useNumberedReferences(): boolean {
   return numbered_references;
 }
 
-function CiteChild({ html }: { html?: string }) {
+interface HoverContext {
+  ast: GenericParent;
+  url?: string;
+}
+
+function CiteChild({ html, ctx }: { html?: string; ctx?: HoverContext | undefined }) {
   return (
-    <div
-      className="hover-document article w-[500px] sm:max-w-[500px] p-3"
-      dangerouslySetInnerHTML={{ __html: html || '' }}
-    />
+    <div className="hover-document article w-[500px] sm:max-w-[500px] p-3">
+      {!!ctx && (
+        <>
+          <MyST ast={ctx.ast} />
+          {ctx.url && <a href={ctx.url}>See more</a>}
+        </>
+      )}
+      <div className="p-3" dangerouslySetInnerHTML={{ __html: html || '' }} />
+    </div>
   );
 }
 
@@ -46,11 +56,14 @@ export const Cite = ({
   error,
   children,
   className,
+  ctx,
 }: {
   label?: string;
   error?: boolean;
   children: React.ReactNode;
   className?: string;
+  ctx?: HoverContext | undefined;
+  meta?: any;
 }) => {
   const references = useReferences();
   if (!label) {
@@ -69,7 +82,7 @@ export const Cite = ({
   const url = doiString ? doi.buildUrl(doiString as string) : refUrl;
   const isButtonLike = (className ?? '').split(' ').includes('button');
   return (
-    <HoverPopover openDelay={300} card={<CiteChild html={html} />}>
+    <HoverPopover openDelay={300} card={<CiteChild html={html} ctx={ctx} />}>
       <cite className={className}>
         {url && (
           <a
@@ -90,7 +103,12 @@ export const Cite = ({
 export const CiteRenderer: NodeRenderer = ({ node, className }) => {
   const numbered = useNumberedReferences();
   return (
-    <Cite label={node.label} error={node.error} className={classNames(className, node.class)}>
+    <Cite
+      label={node.label}
+      error={node.error}
+      className={classNames(className, node.class)}
+      ctx={node.data?.ctx}
+    >
       {numbered && node.kind === 'parenthetical' ? node.enumerator : <MyST ast={node.children} />}
     </Cite>
   );
